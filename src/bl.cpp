@@ -195,6 +195,20 @@ void bl_init(void)
     ESP.restart();
   }
   Log_info("preferences end");
+#ifdef DEVICE_PROFILE_COUNT
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT1)
+  {
+    uint64_t pins = esp_sleep_get_ext1_wakeup_status();
+    if (pins & ((1ULL << DEVICE_PROFILE_NEXT_PIN) | (1ULL << DEVICE_PROFILE_PREV_PIN)))
+    {
+      bool next = pins & (1ULL << DEVICE_PROFILE_NEXT_PIN);
+      uint8_t profile = next ? deviceProfiles.selectNext() : deviceProfiles.selectPrevious();
+      Log_info("Profile button (%s): switched to profile %u of %u (MAC %s)", next ? "next" : "previous", profile,
+               deviceProfiles.count(), device_mac_address().c_str());
+      gpio_wakeup = false; // not the main button, skip its press handling
+    }
+  }
+#endif
   #ifndef BOARD_TRMNL_X
   bool double_click = false;
   if (gpio_wakeup)

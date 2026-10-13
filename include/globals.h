@@ -4,6 +4,7 @@
 #include <Preferences.h>
 #include <api-client/display.h>
 #include <config.h>
+#include <device_profiles.h>
 #include <display.h>
 #include <esp_sleep.h>
 #include <preferences_persistence.h>
@@ -27,6 +28,9 @@ extern PreferencesPersistence preferencesPersistence;
 extern StoredLogs storedLogs;
 extern RefreshInterval refreshInterval;
 extern FirmwareUpdateService firmwareUpdateService;
+#ifdef DEVICE_PROFILE_COUNT
+extern DeviceProfiles deviceProfiles;
+#endif
 
 // --- Image download / API state ---
 extern String new_filename;

@@ -8,6 +8,9 @@ StoredLogs storedLogs(LOG_MAX_NOTES_NUMBER / 2, LOG_MAX_NOTES_NUMBER / 2, PREFER
                       PREFERENCES_LOG_BUFFER_HEAD_KEY, preferencesPersistence);
 RefreshInterval refreshInterval(preferencesPersistence);
 FirmwareUpdateService firmwareUpdateService(preferencesPersistence, systemClock(), WIFI_CONNECTION_RSSI);
+#ifdef DEVICE_PROFILE_COUNT
+DeviceProfiles deviceProfiles(preferencesPersistence, DEVICE_PROFILE_COUNT);
+#endif
 
 // --- Image download / API state ---
 String new_filename = "";

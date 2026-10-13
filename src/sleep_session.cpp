@@ -84,6 +84,9 @@ void goToSleep(void) {
 #else
   esp_sleep_enable_ext0_wakeup((gpio_num_t)pDevice->interrupt_pin, 0);
 #endif
+#ifdef DEVICE_PROFILE_COUNT
+  esp_sleep_enable_ext1_wakeup((1ULL << DEVICE_PROFILE_NEXT_PIN) | (1ULL << DEVICE_PROFILE_PREV_PIN), ESP_EXT1_WAKEUP_ANY_LOW);
+#endif
 #else
 #error "Unsupported ESP32 target for GPIO wakeup configuration"
 #endif
@@ -121,6 +124,9 @@ void goToSleepButtonOnly(void) {
   esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_INTERRUPT, 0);
 #else
   esp_sleep_enable_ext0_wakeup((gpio_num_t)pDevice->interrupt_pin, 0);
+#endif
+#ifdef DEVICE_PROFILE_COUNT
+  esp_sleep_enable_ext1_wakeup((1ULL << DEVICE_PROFILE_NEXT_PIN) | (1ULL << DEVICE_PROFILE_PREV_PIN), ESP_EXT1_WAKEUP_ANY_LOW);
 #endif
 #else
 #error "Unsupported ESP32 target for GPIO wakeup configuration"
