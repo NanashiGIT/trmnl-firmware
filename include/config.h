@@ -111,7 +111,7 @@
 #endif
 
 #if defined(BOARD_XIAO_EPAPER_DISPLAY) || defined(BOARD_SEEED_RETERMINAL_E1001) ||                                     \
-  defined(BOARD_SEEED_RETERMINAL_E1002) || defined(BOARD_SEEED_RETERMINAL_E1003)
+  defined(BOARD_SEEED_RETERMINAL_E1002) || defined(BOARD_SEEED_RETERMINAL_E1003) || defined(BOARD_SEEED_EE03)
 #define PIN_BATTERY 1
 #elif defined(BOARD_XTEINK_X4)
 #define PIN_BATTERY 0
@@ -202,6 +202,16 @@ enum {
 #define EPD_EN_PIN   11
 #define EPD_BUSY_PIN 13
 #define EPD_VCC_EN   21
+#elif defined(BOARD_SEEED_EE03)
+// XIAO ePaper Display Board EE03 (XIAO ESP32-S3 Plus + IT8951), see EE03 V1.0 schematic
+#define EPD_SCK_PIN  7
+#define EPD_MOSI_PIN 9
+#define EPD_MISO_PIN 8
+#define EPD_CS_PIN   44
+#define EPD_RST_PIN  38
+#define EPD_EN_PIN   43 // PWR_EN, the board has a single EPD power enable
+#define EPD_BUSY_PIN 4
+#define EPD_VCC_EN   43
 #endif
 
 #define GPIO_PIN_SET                    1

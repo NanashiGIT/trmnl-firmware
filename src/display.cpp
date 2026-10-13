@@ -38,6 +38,7 @@ const TRMNL_DEVICE device_list[] =
   "sensoria_c5",  BB_PANEL_SENSORIA_C5, BB_PANEL_NONE,         7,     6,     0,     0xff, 0xff,   BATT_ADC,
   "lilygo_t5pro", BB_PANEL_EPDIY_V7,    BBEP_DISPLAY_ED047TC1, 39,    40,    0,     0xff, 0xff,   BATT_BQ27220,
   "reterminal_e1003", BB_PANEL_NONE,    BB_PANEL_NONE,         0xff,  0xff,  3,     1,    40,     BATT_ADC, // IT8951 init is in display_init()
+  "seeed_ee03",   BB_PANEL_NONE,        BB_PANEL_NONE,         0xff,  0xff,  2,     1,    6,      BATT_ADC, // IT8951 init is in display_init()
   NULL, 0, 0, 0, 0, 0, 0, 0, 0,
 }; // Parallel Eink device list
 
@@ -292,7 +293,7 @@ void display_init(void)
         bbep.begin(dpList[pDevice->panel_set][0].OneBit);
     }
 #else // Parallel eink devices
-#if defined (BOARD_SEEED_RETERMINAL_E1003)
+#if defined (BOARD_SEEED_RETERMINAL_E1003) || defined(BOARD_SEEED_EE03)
     bbep.initIT8951(EPD_MOSI_PIN, EPD_MISO_PIN, EPD_SCK_PIN, EPD_CS_PIN, EPD_BUSY_PIN, EPD_RST_PIN, EPD_EN_PIN, EPD_VCC_EN);
     bbep.setPanelSize(BBEP_DISPLAY_ED103TC2);
 #else // normal parallel eink devices

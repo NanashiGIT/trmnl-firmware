@@ -734,7 +734,7 @@ static https_request_err_e downloadAndShow()
 
   if (!status && result == HTTPS_SUCCESS) { // this means we already have this image stored in SPIFFS
       char szTemp[36];
-#if PARALLEL_EPD && !defined(BOARD_SEEED_RETERMINAL_E1003)
+#if PARALLEL_EPD && !defined(BOARD_SEEED_RETERMINAL_E1003) && !defined(BOARD_SEEED_EE03)
       if (DisplayedImage::exists()) {
         load_prev_image(); // decode the older image into the previous buffer of FastEPD
       }
