@@ -121,6 +121,7 @@ extern BQ27427 lipo; // Use lipo.[] to interact with the library in an Arduino
 
 #include "Group5.h"
 #include <config.h>
+#include <switch_timing.h>
 #include "wifi_connect_qr.h"
 #include "wifi_failed_qr.h"
 #include <ctype.h> //iscntrl()
@@ -293,7 +294,13 @@ void display_init(void)
         bbep.begin(dpList[pDevice->panel_set][0].OneBit);
     }
 #else // Parallel eink devices
-#if defined (BOARD_SEEED_RETERMINAL_E1003) || defined(BOARD_SEEED_EE03)
+#if defined(BOARD_SEEED_EE03)
+    // The EPD power is off after every deep sleep: skip the power cycle and let the IT8951 boot
+    // while the image is read and decoded; the first draw waits for it
+    bbep.initIT8951(EPD_MOSI_PIN, EPD_MISO_PIN, EPD_SCK_PIN, EPD_CS_PIN, EPD_BUSY_PIN, EPD_RST_PIN, EPD_EN_PIN, EPD_VCC_EN,
+                    BBEP_IT8951_FAST_INIT);
+    bbep.setPanelSize(BBEP_DISPLAY_ED103TC2);
+#elif defined(BOARD_SEEED_RETERMINAL_E1003)
     bbep.initIT8951(EPD_MOSI_PIN, EPD_MISO_PIN, EPD_SCK_PIN, EPD_CS_PIN, EPD_BUSY_PIN, EPD_RST_PIN, EPD_EN_PIN, EPD_VCC_EN);
     bbep.setPanelSize(BBEP_DISPLAY_ED103TC2);
 #else // normal parallel eink devices
@@ -1906,6 +1913,7 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
     {
         Log_info("Drawing PNG");
         iRefreshMode = png_to_epd(image_buffer, data_size, false);
+        TIMING_MARK("decode");
     }
     else if (MOTOSHORT(image_buffer) == 0xffd8) {
         Log_info("Drawing JPEG");
@@ -2039,6 +2047,7 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
                                    : ((iUpdateCount & 7) == 0 || (iTempProfile > 0)) ? CLEAR_SLOW : CLEAR_FAST;
         Log_info("fullUpdate clear mode = %d\n", iClearMode);
         bbep.fullUpdate(iClearMode, false);
+        TIMING_MARK("update");
  //   }
  }
 #endif
@@ -2863,6 +2872,8 @@ void display_sleep(void)
     bbep.sleep(LIGHT_SLEEP);
 #else
     bbep.einkPower(0);
+    TIMING_MARK("s_standby");
     bbep.deInit();
+    TIMING_MARK("s_deinit");
 #endif
 }

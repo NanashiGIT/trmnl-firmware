@@ -10,6 +10,7 @@
 #include <globals.h>
 #include <png.h>
 #include <services/http_retry_request.h>
+#include <switch_timing.h>
 #include <trmnl_log.h>
 
 #include "displayed_image.h"
@@ -33,8 +34,10 @@ bool profileCacheShow(uint8_t profile) {
     return false;
   }
 
+  TIMING_MARK("read");
   Log_info("Showing cached image %s of profile %u", path.c_str(), profile);
   display_show_image(image, size, true);
+  TIMING_MARK("shown");
   free(image);
   DisplayedImage::remember(path.c_str());
   preferences.putString(PREFERENCES_CURRENT_PATH_KEY, path);

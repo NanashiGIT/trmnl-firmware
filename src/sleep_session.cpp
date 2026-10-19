@@ -10,6 +10,7 @@
 #include <pins.h>
 #include <refresh_interval.h>
 #include <sleep_session.h>
+#include <switch_timing.h>
 #include <trmnl_log.h>
 
 #include "driver/gpio.h"
@@ -32,8 +33,10 @@ extern TRMNL_DEVICE *pDevice;
  * @return none
  */
 void goToSleep(void) {
+  TIMING_MARK("gts");
   Log.info("%s [%d]: go to sleep\r\n", __FILE__, __LINE__);
   submitStoredLogs();
+  TIMING_MARK("logs");
 
 // DEBUG - workaround to prevent crash in the WiFi stack of unknown origin
 #ifndef PARALLEL_EPD
@@ -69,6 +72,7 @@ void goToSleep(void) {
   Log.info("%s [%d]: total awake time - %d ms\r\n", __FILE__, __LINE__, iPrevWakeTime);
   Log.info("%s [%d]: time to sleep - %d\r\n", __FILE__, __LINE__, time_to_sleep);
   preferences.putUInt(PREFERENCES_LAST_SLEEP_TIME, systemClock().getTime());
+  TIMING_SAVE();
   preferences.end();
   esp_sleep_enable_timer_wakeup((uint64_t)time_to_sleep * SLEEP_uS_TO_S_FACTOR);
   // Configure GPIO pin for wakeup

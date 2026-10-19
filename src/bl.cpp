@@ -10,6 +10,7 @@
 #include <battery.h>
 #include <device_id.h>
 #include <profile_cache.h>
+#include <switch_timing.h>
 #include <trmnl_log.h>
 #include <types.h>
 #include <ArduinoLog.h>
@@ -151,6 +152,7 @@ void bl_init(void)
   Log.begin(LOG_LEVEL_VERBOSE, &Serial);
 #endif
   Log_info("BL init success");
+  TIMING_MARK("bl");
 
   wifiSessionInit();
 
@@ -344,16 +346,20 @@ void bl_init(void)
       Log_error("SF not saved");
     }
   }
+  TIMING_MARK("hw");
   // Read the battery voltage BEFORE the display or WiFi is turned on
   vBatt = battery().readVoltage(pDevice);
+  TIMING_MARK("batt");
 
   // EPD init
   // EPD clear
   Log.info("%s [%d]: Display init\r\n", __FILE__, __LINE__);
   display_init();
+  TIMING_MARK("epdinit");
 
   // Mount SPIFFS
   filesystem_init();
+  TIMING_MARK("fs");
 #endif // !BOARD_TRMNL_X
 
 #ifdef DEVICE_PROFILE_COUNT
@@ -362,6 +368,7 @@ void bl_init(void)
   if (profile_switched && profileCacheShow(deviceProfiles.active()))
   {
     display_sleep();
+    TIMING_MARK("epdoff");
     goToSleep();
   }
 #endif
