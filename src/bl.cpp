@@ -9,6 +9,7 @@
 #include <config.h>
 #include <battery.h>
 #include <device_id.h>
+#include <profile_cache.h>
 #include <trmnl_log.h>
 #include <types.h>
 #include <ArduinoLog.h>
@@ -63,6 +64,7 @@
 
 static float vBatt;
 static https_request_err_e downloadAndShow(); // download and show the image
+ApiDisplayInputs loadApiDisplayInputs(Preferences &preferences);
 void submitStoredLogs(void);
 void writeSpecialFunction(SPECIAL_FUNCTION function);
 static void showMessageWithLogo(MSG message_type, const ApiSetupResponse &apiResponse);
@@ -196,11 +198,14 @@ void bl_init(void)
   }
   Log_info("preferences end");
 #ifdef DEVICE_PROFILE_COUNT
+  bool profile_switched = false;
   if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT1)
   {
     uint64_t pins = esp_sleep_get_ext1_wakeup_status();
     if (pins & ((1ULL << DEVICE_PROFILE_NEXT_PIN) | (1ULL << DEVICE_PROFILE_PREV_PIN)))
     {
+      profileCacheRememberCurrent(deviceProfiles.active()); // so switching back is instant too
+      profile_switched = true;
       bool next = pins & (1ULL << DEVICE_PROFILE_NEXT_PIN);
       uint8_t profile = next ? deviceProfiles.selectNext() : deviceProfiles.selectPrevious();
       Log_info("Profile button (%s): switched to profile %u of %u (MAC %s)", next ? "next" : "previous", profile,
@@ -351,6 +356,16 @@ void bl_init(void)
   filesystem_init();
 #endif // !BOARD_TRMNL_X
 
+#ifdef DEVICE_PROFILE_COUNT
+  // A profile button with a prefetched image: draw it and sleep, skipping the
+  // loading logo, Wi-Fi and the API. The next scheduled wake refreshes as usual.
+  if (profile_switched && profileCacheShow(deviceProfiles.active()))
+  {
+    display_sleep();
+    goToSleep();
+  }
+#endif
+
 #ifdef BOARD_TRMNL_X
   // Read the gauge before the panel draws load current, and before the logo
   // is drawn so its battery icon has a snapshot to read.
@@ -461,6 +476,11 @@ void bl_init(void)
   // OTA checking, image checking and drawing
   https_request_err_e request_result = downloadAndShow();
   Log.info("%s [%d]: request result - %s\r\n", __FILE__, __LINE__, https_request_err_str(request_result));
+
+#ifdef DEVICE_PROFILE_COUNT
+  // The active image is on screen; now fetch the other profiles' so a switch can show them right away
+  profileCachePrefetch(loadApiDisplayInputs(preferences));
+#endif
 
   if (request_result == HTTPS_IMAGE_FILE_TOO_BIG)
   {
@@ -848,8 +868,10 @@ static https_request_err_e downloadAndShow()
 
   submitStoredLogs();
 
+#ifndef DEVICE_PROFILE_COUNT // profile prefetch still needs Wi-Fi after the active image
   WiFi.disconnect(true); // no need for WiFi, save power starting here
   Log.info("%s [%d]: Received successfully; WiFi off.\r\n", __FILE__, __LINE__);
+#endif
 
   bool image_reverse = false;
   if (isPNG)

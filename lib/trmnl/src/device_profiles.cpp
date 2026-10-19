@@ -31,6 +31,24 @@ uint8_t DeviceProfiles::select(uint8_t profile) {
   return profile;
 }
 
+String DeviceProfiles::apiKey(uint8_t profile) { return identity(API_KEY_KEY, profile); }
+
+String DeviceProfiles::friendlyId(uint8_t profile) { return identity(FRIENDLY_ID_KEY, profile); }
+
+String DeviceProfiles::cachedImage(uint8_t profile) {
+  String slot = slotKey(IMAGE_KEY, profile);
+  return persistence.recordExists(slot.c_str()) ? persistence.readString(slot.c_str(), "") : String("");
+}
+
+void DeviceProfiles::setCachedImage(uint8_t profile, const String &path) {
+  String slot = slotKey(IMAGE_KEY, profile);
+  if (path.length() > 0) {
+    if (cachedImage(profile) != path) persistence.writeString(slot.c_str(), path.c_str());
+  } else if (persistence.recordExists(slot.c_str())) {
+    persistence.remove(slot.c_str());
+  }
+}
+
 String DeviceProfiles::macForProfile(const String &hardwareMac, uint8_t profile) {
   unsigned int octets[6];
   if (profile == 0 || sscanf(hardwareMac.c_str(), "%2x:%2x:%2x:%2x:%2x:%2x", &octets[0], &octets[1], &octets[2],
@@ -45,6 +63,11 @@ String DeviceProfiles::macForProfile(const String &hardwareMac, uint8_t profile)
   snprintf(mac, sizeof(mac), "%02X:%02X:%02X:%02X:%02X:%02X", octets[0] & 0xff, octets[1] & 0xff, octets[2] & 0xff,
            octets[3] & 0xff, octets[4] & 0xff, octets[5] & 0xff);
   return String(mac);
+}
+
+String DeviceProfiles::identity(const char *key, uint8_t profile) {
+  String stored = profile == active() ? String(key) : slotKey(key, profile);
+  return persistence.recordExists(stored.c_str()) ? persistence.readString(stored.c_str(), "") : String("");
 }
 
 void DeviceProfiles::stash(const char *key, uint8_t profile) {

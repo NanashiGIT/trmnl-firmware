@@ -14,6 +14,7 @@ public:
   // Must match PREFERENCES_API_KEY and PREFERENCES_FRIENDLY_ID in config.h.
   static constexpr const char *API_KEY_KEY = "api_key";
   static constexpr const char *FRIENDLY_ID_KEY = "friendly_id";
+  static constexpr const char *IMAGE_KEY = "pf_img";
 
   DeviceProfiles(Persistence &persistence, uint8_t count);
 
@@ -28,12 +29,21 @@ public:
   uint8_t selectNext();
   uint8_t selectPrevious();
 
+  // Identity of any profile, active or stashed; empty if it never registered.
+  String apiKey(uint8_t profile);
+  String friendlyId(uint8_t profile);
+
+  // Image file last shown or prefetched for a profile, empty if none.
+  String cachedImage(uint8_t profile);
+  void setCachedImage(uint8_t profile, const String &path);
+
   // Profile 0 keeps the hardware MAC. Other profiles set the locally
   // administered bit and XOR the profile index into the last octet.
   static String macForProfile(const String &hardwareMac, uint8_t profile);
 
 private:
   uint8_t select(uint8_t profile);
+  String identity(const char *key, uint8_t profile);
   void stash(const char *key, uint8_t profile);
   void restore(const char *key, uint8_t profile);
   static String slotKey(const char *key, uint8_t profile);

@@ -7,6 +7,7 @@ void test_nvs_keys_are_stable(void) {
   TEST_ASSERT_EQUAL_STRING("profile", DeviceProfiles::ACTIVE_KEY);
   TEST_ASSERT_EQUAL_STRING("api_key", DeviceProfiles::API_KEY_KEY);
   TEST_ASSERT_EQUAL_STRING("friendly_id", DeviceProfiles::FRIENDLY_ID_KEY);
+  TEST_ASSERT_EQUAL_STRING("pf_img", DeviceProfiles::IMAGE_KEY);
 }
 
 void test_profile_zero_keeps_the_hardware_mac(void) {
@@ -102,6 +103,40 @@ void test_switching_back_restores_each_profiles_identity(void) {
   TEST_ASSERT_EQUAL_STRING("BBBBBB", persistence.readString("friendly_id", "").c_str());
 }
 
+void test_identity_is_readable_for_active_and_stashed_profiles(void) {
+  MemoryPersistence persistence;
+  persistence.writeString("api_key", "key0");
+  persistence.writeString("friendly_id", "AAAAAA");
+  DeviceProfiles profiles(persistence, 3);
+
+  profiles.selectNext();
+  persistence.writeString("api_key", "key1");
+
+  TEST_ASSERT_EQUAL_STRING("key1", profiles.apiKey(1).c_str());
+  TEST_ASSERT_EQUAL_STRING("key0", profiles.apiKey(0).c_str());
+  TEST_ASSERT_EQUAL_STRING("AAAAAA", profiles.friendlyId(0).c_str());
+  TEST_ASSERT_EQUAL_STRING("", profiles.apiKey(2).c_str());
+  TEST_ASSERT_EQUAL_STRING("", profiles.friendlyId(1).c_str());
+}
+
+void test_cached_image_is_stored_per_profile(void) {
+  MemoryPersistence persistence;
+  DeviceProfiles profiles(persistence, 3);
+
+  TEST_ASSERT_EQUAL_STRING("", profiles.cachedImage(1).c_str());
+  profiles.setCachedImage(1, "/screen-a-1791419471");
+  profiles.setCachedImage(2, "/screen-b-1791419471");
+  TEST_ASSERT_EQUAL_STRING("/screen-a-1791419471", profiles.cachedImage(1).c_str());
+  TEST_ASSERT_EQUAL_STRING("/screen-b-1791419471", profiles.cachedImage(2).c_str());
+
+  uint32_t writes = persistence.writeCount;
+  profiles.setCachedImage(1, "/screen-a-1791419471");
+  TEST_ASSERT_EQUAL_UINT32(writes, persistence.writeCount);
+
+  profiles.setCachedImage(1, "");
+  TEST_ASSERT_FALSE(persistence.recordExists("pf_img_p1"));
+}
+
 void test_a_single_profile_never_changes_identity(void) {
   MemoryPersistence persistence;
   persistence.writeString("api_key", "key0");
@@ -130,6 +165,8 @@ void process() {
   RUN_TEST(test_previous_after_next_returns_to_the_same_identity);
   RUN_TEST(test_switching_to_a_new_profile_clears_the_identity_so_it_registers);
   RUN_TEST(test_switching_back_restores_each_profiles_identity);
+  RUN_TEST(test_identity_is_readable_for_active_and_stashed_profiles);
+  RUN_TEST(test_cached_image_is_stored_per_profile);
   RUN_TEST(test_a_single_profile_never_changes_identity);
   UNITY_END();
 }
